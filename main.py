@@ -140,40 +140,50 @@ st.markdown("""
             font-family: 'Courier New', monospace;
             font-size: 15px;
         }
+        .output-box {
+            background: #f8f8f8;
+            border-radius: 8px;
+            padding: 16px;
+            height: 600px;
+            overflow: auto;
+        }
     </style>
-
-    <div class="title-wrap">
-        <h1>🧹 QuickAbout – AI HTML Snippet Builder</h1>
-    </div>
-
-    <div class="big-sub">
-        Paste your raw category “About” text below. This tool will convert it into clean, formatted HTML for use in the EF category About tab.
-    </div>
 """, unsafe_allow_html=True)
 
-
 st.markdown("""
-<div style="font-size:18px; font-weight:600;">
-    Paste your plain About Text:
+<div class="title-wrap">
+    <h1>🧹 QuickAbout – AI HTML Snippet Builder</h1>
+</div>
+<div class="big-sub">
+    Paste your raw category “About” text below. This tool will convert it into clean, formatted HTML for use in the EF category About tab.
 </div>
 """, unsafe_allow_html=True)
 
-about_input = st.text_area("", height=300, placeholder="Enter product category about text here...")
+col1, col2 = st.columns([1, 1])
 
-if st.button("✨ Generate HTML Snippet") and about_input.strip():
-    with st.spinner("QuickAbout is on it..."):
-        html_output = build_html(about_input)
+with col1:
+    st.markdown("""
+    <div style="font-size:18px; font-weight:600;">Paste your plain About Text:</div>
+    """, unsafe_allow_html=True)
+    about_input = st.text_area("", height=300, placeholder="Enter product category about text here...")
 
-    st.subheader("📾 Generated HTML Snippet")
-    st.code(html_output, language="html")
-    st.download_button("Download HTML", html_output, file_name="about_snippet.html")
-    st.button("📋 Copy to Clipboard", help="Use right-click > Copy if browser copy fails")
+    if st.button("✨ Generate HTML Snippet") and about_input.strip():
+        with st.spinner("Formatting with QuickAbout..."):
+            html_output = build_html(about_input)
+            st.session_state.generated_html = html_output
 
-    with st.expander("📘 How to Paste This in Admin Panel"):
-        st.markdown("""
-1. Go to **Admin Panel → Products → Categories → Edit**  
-2. Click the **</> (code view)** icon in the 'About' section  
-3. Paste the HTML snippet generated above  
-4. Toggle **Show ‘About’ tab** to YES  
-5. Click Save
-        """)
+with col2:
+    if "generated_html" in st.session_state:
+        st.markdown("""<h4 style='margin-bottom:10px;'>📾 Generated HTML Snippet</h4>""", unsafe_allow_html=True)
+        st.code(st.session_state.generated_html, language="html")
+        st.download_button("Download HTML", st.session_state.generated_html, file_name="about_snippet.html")
+        st.button("📋 Copy to Clipboard", help="Use right-click > Copy if browser copy fails")
+
+        with st.expander("📘 How to Paste This in Admin Panel"):
+            st.markdown("""
+            1. Go to **Admin Panel → Products → Categories → Edit**  
+            2. Click the **</> (code view)** icon in the 'About' section  
+            3. Paste the HTML snippet generated above  
+            4. Toggle **Show ‘About’ tab** to YES  
+            5. Click Save
+            """)
