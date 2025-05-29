@@ -165,9 +165,24 @@ with col1:
     st.markdown("#### 📄 Paste your plain About Text")
     about_input = st.text_area("", height=400, placeholder="Enter product category about text here...")
 
-    if st.button("✨ Generate HTML Snippet") and about_input.strip():
+    # Buttons in same row
+    btn1, btn2 = st.columns([1, 1])
+
+    with btn1:
+        generate_clicked = st.button("✨ Generate HTML Snippet")
+
+    with btn2:
+        clear_clicked = st.button("🔄 Clear & Start New")
+
+    # Handle Generate
+    if generate_clicked and about_input.strip():
         with st.spinner("QuickAbout is on it..."):
             st.session_state["html_output"] = build_html(about_input)
+
+    # Handle Clear
+    if clear_clicked:
+        st.session_state["html_output"] = ""
+        st.rerun()  # ✅ Use this instead of st.experimental_rerun()
 
     st.markdown("""
     <div class="admin-help" style="font-size:16px;">
