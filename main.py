@@ -1,10 +1,20 @@
-# QuickAbout - AI-Powered HTML Snippet Generator for Category "About" Sections
+import streamlit as st
+st.set_page_config(page_title="QuickAbout - HTML Generator", page_icon="🧹")
+
+from auth import login_form, is_authenticated, logout_button
 from dotenv import load_dotenv
 import os
 import openai
-import streamlit as st
 
-# Load API key from .env
+# 🔐 Require authentication
+if not is_authenticated():
+    login_form()
+    st.stop()
+
+# ✅ Show logout after login
+logout_button()
+
+# 🔑 Load OpenAI API key
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
