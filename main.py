@@ -48,41 +48,54 @@ SPACER = """
   </div>
 """
 
+# -------------------------------
+# Format Category Text into Clean HTML
+# -------------------------------
 def generate_formatted_html(about_text):
     prompt = f"""
-You are a professional HTML formatter. Take the following raw text intended for a product category "About" section and convert it to HTML wrapped in <div class=\"cdkeys-paragraph\"> blocks.
+You are a professional HTML formatter. Take the following raw text intended for a product category "About" section and convert it to HTML wrapped in <div class="cdkeys-paragraph"> blocks.
 
-- Use <h6> for headings, <p> for paragraphs.
-- Use <ul>/<li> only if lists are clearly intended.
-- Do not change the text.
-- Do not add any extra text.
+Format rules:
+- Use <h6> for clear headings
+- Use <p> for regular paragraph text
+- If bullet points are present, wrap them in <ul class="what-cdkeys"> and <li>
+- Never rewrite or add new text
+- Do not wrap with <html>, <body>, <head>, or <style> tags
 
 Input:
 {about_text}
 
 ---
-Output only the body sections (no outer wrapper):
+Output only the HTML body content (no <html> or <body> tag):
 """
     response = openai.chat.completions.create(
         model="gpt-4-turbo",
         messages=[
-            {"role": "system", "content": "You format plain marketing text into HTML for product descriptions."},
+            {"role": "system", "content": "You convert plain marketing text into clean, component-level HTML for category pages."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3
     )
-    return response.choices[0].message.content.strip()
 
+    raw_html = response.choices[0].message.content.strip()
+
+    # ✂️ Post-cleanup: remove <html>, <body>, or <head> if present
+    cleaned_html = raw_html.replace("<html>", "").replace("</html>", "")
+    cleaned_html = cleaned_html.replace("<body>", "").replace("</body>", "")
+    cleaned_html = cleaned_html.replace("<head>", "").replace("</head>", "")
+    return cleaned_html.strip()
+
+# -------------------------------
+# Extract FAQs from Content
+# -------------------------------
 def extract_faqs(text):
     prompt = f"""
-From the following content, extract up to 5 FAQs and format them in this structure:
+From the following content, extract up to 5 real FAQs and format them like this:
 
-Q: Question 1
-A: Answer 1
-Q: Question 2
-A: Answer 2
+Q: Question?
+A: Answer.
 
-Only include FAQs present in the content. Do not make them up.
+Only extract questions that are clearly present in the content. Do not invent or assume any.
 
 Input:
 {text}
@@ -95,6 +108,7 @@ Input:
         temperature=0.2
     )
     return response.choices[0].message.content.strip()
+
 
 def build_html(full_text):
     body_html = generate_formatted_html(full_text)
