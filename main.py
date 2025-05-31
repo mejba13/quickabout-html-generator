@@ -7,16 +7,24 @@ import os
 import openai
 
 #🔐 Require authentication
-if not is_authenticated():
-    login_form()
-    st.stop()
-
-# ✅ Show logout after login
-logout_button()
+# if not is_authenticated():
+#     login_form()
+#     st.stop()
+#
+# # ✅ Show logout after login
+# logout_button()
 
 # 🔑 Load OpenAI API key
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+# Load the Hugging Face API
+from huggingface_hub import InferenceClient
+HF_API_KEY = os.getenv("HF_API_KEY")
+HF_MODEL = os.getenv("HF_MODEL", "tiiuae/falcon-7b-instruct")
+USE_HF = os.getenv("USE_HF", "False").lower() == "true"
+
 
 # -------------------------------
 # Base HTML Template
@@ -61,6 +69,7 @@ SPACER = """
 # -------------------------------
 # Format Category Text into Clean HTML
 # -------------------------------
+
 def generate_formatted_html(about_text):
     prompt = f"""
 You are a professional HTML formatter. Take the following raw text intended for a product category "About" section and convert it to HTML wrapped in <div class="cdkeys-paragraph"> blocks.
@@ -78,18 +87,30 @@ Input:
 ---
 Output only the HTML body content (no <html> or <body> tag):
 """
-    response = openai.chat.completions.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "You convert plain marketing text into clean, component-level HTML for category pages."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-    )
 
-    raw_html = response.choices[0].message.content.strip()
+    if USE_HF:
+        client = InferenceClient(token=HF_API_KEY)
+        raw_html = client.text_generation(
+            prompt,
+            model=HF_MODEL,
+            temperature=0.3,
+            top_k=50,
+            top_p=0.95,
+            repetition_penalty=1.03,
+            stop_sequences=["---"]
+        )
+    else:
+        response = openai.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "system", "content": "You convert plain marketing text into clean, component-level HTML for category pages."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+        raw_html = response.choices[0].message.content.strip()
 
-    # ✂️ Post-cleanup: remove <html>, <body>, or <head> if present
+    # ✂️ Post-cleanup
     cleaned_html = raw_html.replace("<html>", "").replace("</html>", "")
     cleaned_html = cleaned_html.replace("<body>", "").replace("</body>", "")
     cleaned_html = cleaned_html.replace("<head>", "").replace("</head>", "")
@@ -110,20 +131,50 @@ Only extract questions that are clearly present in the content. Do not invent or
 Input:
 {text}
 """
-    response = openai.chat.completions.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.2
-    )
-    return response.choices[0].message.content.strip()
 
+    if USE_HF:
+        client = InferenceClient(token=HF_API_KEY)
+        faqs = client.text_generation(
+            prompt,
+            model=HF_MODEL,
+            temperature=0.2,
+            top_k=50,
+            top_p=0.95,
+            repetition_penalty=1.02,
+            stop_sequences=["---"]
+        )
+        return faqs.strip()
+    else:
+        response = openai.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2
+        )
+        return response.choices[0].message.content.strip()
+
+
+import re
+
+import re
 
 def build_html(full_text):
-    body_html = generate_formatted_html(full_text)
+    # Extract raw FAQs from the input text first
     faqs_raw = extract_faqs(full_text)
 
+    # If FAQs found, strip them from the original body input
+    if "Q:" in faqs_raw and "A:" in faqs_raw:
+        # Remove Q/A blocks and any 'FAQs' headings
+        faq_block_pattern = r"(FAQs[\n:]*)?(Q:.*?\nA:.*?)(?=(\nQ:|\Z))"
+        cleaned_text = re.sub(faq_block_pattern, "", full_text, flags=re.DOTALL | re.IGNORECASE).strip()
+    else:
+        cleaned_text = full_text  # No FAQ present, keep original
+
+    # Generate main HTML body without duplicated FAQs
+    body_html = generate_formatted_html(cleaned_text)
+
+    # Build accordion FAQ items
     faq_html_blocks = []
     for i, qa in enumerate(faqs_raw.split("Q: ")[1:], start=1):
         parts = qa.strip().split("A: ")
@@ -132,8 +183,18 @@ def build_html(full_text):
             answer = parts[1].strip()
             faq_html_blocks.append(FAQ_TEMPLATE.format(index=i, question=question, answer=answer))
 
+    # Only insert FAQ section if at least one FAQ was extracted
     spacer = SPACER if faq_html_blocks else ""
-    return BASE_TEMPLATE.format(content_blocks=body_html, faq_blocks="\n".join(faq_html_blocks), spacer_block=spacer)
+    faq_block_html = "\n".join(faq_html_blocks) if faq_html_blocks else ""
+
+    return BASE_TEMPLATE.format(
+        content_blocks=body_html,
+        faq_blocks=faq_block_html,
+        spacer_block=spacer
+    )
+
+
+
 
 # -------------------------------
 # Streamlit UI
