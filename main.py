@@ -160,38 +160,39 @@ import re
 import re
 
 def build_html(full_text):
-    # Extract raw FAQs from the input text first
+    # ✅ Step 1: Extract FAQs
     faqs_raw = extract_faqs(full_text)
 
-    # If FAQs found, strip them from the original body input
-    if "Q:" in faqs_raw and "A:" in faqs_raw:
-        # Remove Q/A blocks and any 'FAQs' headings
-        faq_block_pattern = r"(FAQs[\n:]*)?(Q:.*?\nA:.*?)(?=(\nQ:|\Z))"
-        cleaned_text = re.sub(faq_block_pattern, "", full_text, flags=re.DOTALL | re.IGNORECASE).strip()
-    else:
-        cleaned_text = full_text  # No FAQ present, keep original
+    # ✅ Step 2: Strip Q/A blocks (plus any "FAQs" headings)
+    faq_qas = re.findall(r"Q:\s*(.*?)\nA:\s*(.*?)(?=\nQ:|\Z)", faqs_raw, flags=re.DOTALL)
+    stripped_text = full_text
 
-    # Generate main HTML body without duplicated FAQs
-    body_html = generate_formatted_html(cleaned_text)
+    if faq_qas:
+        # Remove each Q/A pair and optional "FAQs" prefix
+        for question, answer in faq_qas:
+            qa_pattern = re.escape(f"Q: {question.strip()}") + r"\s*A:\s*" + re.escape(answer.strip())
+            stripped_text = re.sub(qa_pattern, "", stripped_text, flags=re.DOTALL)
 
-    # Build accordion FAQ items
+        # Also remove "FAQs" heading if present (e.g., as <h6>FAQs</h6> or plain text)
+        stripped_text = re.sub(r"\n*FAQs[:\n]*", "\n", stripped_text, flags=re.IGNORECASE)
+
+    stripped_text = stripped_text.strip()
+
+    # ✅ Step 3: Generate clean body HTML (no FAQ paragraphs)
+    body_html = generate_formatted_html(stripped_text)
+
+    # ✅ Step 4: Format accordion
     faq_html_blocks = []
-    for i, qa in enumerate(faqs_raw.split("Q: ")[1:], start=1):
-        parts = qa.strip().split("A: ")
-        if len(parts) == 2:
-            question = parts[0].strip()
-            answer = parts[1].strip()
-            faq_html_blocks.append(FAQ_TEMPLATE.format(index=i, question=question, answer=answer))
+    for i, (question, answer) in enumerate(faq_qas, start=1):
+        faq_html_blocks.append(FAQ_TEMPLATE.format(index=i, question=question.strip(), answer=answer.strip()))
 
-    # Only insert FAQ section if at least one FAQ was extracted
     spacer = SPACER if faq_html_blocks else ""
-    faq_block_html = "\n".join(faq_html_blocks) if faq_html_blocks else ""
-
     return BASE_TEMPLATE.format(
         content_blocks=body_html,
-        faq_blocks=faq_block_html,
+        faq_blocks="\n".join(faq_html_blocks),
         spacer_block=spacer
     )
+
 
 
 
