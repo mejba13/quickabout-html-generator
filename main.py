@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 import openai
 
-🔐 Require authentication
+#🔐 Require authentication
 if not is_authenticated():
     login_form()
     st.stop()
