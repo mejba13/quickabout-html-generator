@@ -7,12 +7,12 @@ import os
 import openai
 
 #🔐 Require authentication
-# if not is_authenticated():
-#     login_form()
-#     st.stop()
-#
-# # ✅ Show logout after login
-# logout_button()
+if not is_authenticated():
+    login_form()
+    st.stop()
+
+# ✅ Show logout after login
+logout_button()
 
 # 🔑 Load OpenAI API key
 load_dotenv()
