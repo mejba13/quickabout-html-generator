@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(page_title="QuickAbout - HTML Generator", page_icon="🧹")
+st.set_page_config(page_title="QuickAbout - HTML Generator", page_icon="🧹", layout="wide")
 
 from auth import login_form, is_authenticated, logout_button
 from dotenv import load_dotenv
@@ -138,7 +138,6 @@ def build_html(full_text):
 # -------------------------------
 # Streamlit UI
 # -------------------------------
-st.set_page_config(page_title="QuickAbout - HTML Generator", page_icon="🧹", layout="wide")
 
 st.markdown("""
 <style>
