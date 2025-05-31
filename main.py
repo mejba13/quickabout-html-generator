@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 import openai
 
-# 🔐 Require authentication
+🔐 Require authentication
 if not is_authenticated():
     login_form()
     st.stop()
@@ -239,8 +239,8 @@ with col2:
             )
         with btn_col2:
             st.button(
-                "📋 Copy to Clipboard",
-                help="Use right-click > Copy if browser copy fails",
+                "📋 Hover HTML Snippet to Copy",
+                help="Move your mouse over the HTML snippet to reveal and click the copy icon.",
                 key="copy_btn"
             )
 
