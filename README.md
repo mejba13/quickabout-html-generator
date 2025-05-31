@@ -1,3 +1,4 @@
+
 # QuickAbout – AI HTML Snippet Generator
 
 QuickAbout is a lightweight internal tool designed for Electronic First. It converts plain “About” category text into clean, structured HTML that matches the official EF content layout.
@@ -8,12 +9,14 @@ QuickAbout is a lightweight internal tool designed for Electronic First. It conv
 - Auto-generates accordion-style FAQs
 - Copy/download snippet directly
 - Streamlit interface for non-tech users
+- Supports both OpenAI GPT-4 Turbo and Hugging Face inference APIs
 
 ## 🧰 Tech Stack
 
 - Python 3.10+
 - Streamlit
 - OpenAI GPT-4 Turbo API
+- Hugging Face Inference API
 - `python-dotenv` for secure key handling
 
 ## 🚀 Getting Started
@@ -24,11 +27,19 @@ cd quickabout-html-generator
 pip install -r requirements.txt
 ```
 
-Create a `.env` file:
+Create a `.env` file with either OpenAI or Hugging Face credentials:
 
 ```env
-OPENAI_API_KEY=your-secret-api-key
+# OpenAI Option
+OPENAI_API_KEY=your-openai-key
+
+# Hugging Face Option (optional)
+HF_API_KEY=your-huggingface-key
+HF_MODEL=tiiuae/falcon-7b-instruct
+USE_HF=True
 ```
+
+Set `USE_HF=True` to switch to Hugging Face model, or leave it as `False` (default) to use GPT-4 Turbo.
 
 Run the app:
 
