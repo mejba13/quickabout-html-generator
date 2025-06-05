@@ -101,7 +101,7 @@ Output only the HTML body content (no <html> or <body> tag):
         )
     else:
         response = openai.chat.completions.create(
-            model="gpt-4-turbo",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You convert plain marketing text into clean, component-level HTML for category pages."},
                 {"role": "user", "content": prompt}
